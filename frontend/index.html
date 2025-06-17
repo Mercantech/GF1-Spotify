@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spotify-klon</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Spotify-klon</h1>
+      <input
+        type="text"
+        id="search"
+        placeholder="Søg efter sang eller kunstner..."
+      />
+      <button id="open-upload-modal" type="button">
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          style="vertical-align: middle; margin-right: 0.5em"
+        >
+          <path
+            d="M12 5v14m7-7H5"
+            stroke="currentColor"
+            stroke-width="2"
+            fill="none"
+            stroke-linecap="round"
+          />
+        </svg>
+        Tilføj sang
+      </button>
+    </header>
+    <main>
+      <div id="loader" class="hidden"></div>
+      <div id="error" class="hidden"></div>
+      <section id="song-list"></section>
+    </main>
+    <footer id="player">
+      <img id="player-cover" src="" alt="Cover" style="display: none" />
+      <div id="player-info"></div>
+      <span id="current-time">0:00</span>
+      <input type="range" id="seek-bar" value="0" min="0" max="100" step="1" />
+      <span id="duration">0:00</span>
+      <button id="play-pause" aria-label="Afspil/Pause">
+        <svg id="play-icon" viewBox="0 0 24 24" width="28" height="28">
+          <polygon points="6,4 20,12 6,20" fill="currentColor" />
+        </svg>
+        <svg
+          id="pause-icon"
+          viewBox="0 0 24 24"
+          width="28"
+          height="28"
+          style="display: none"
+        >
+          <rect x="6" y="4" width="4" height="16" fill="currentColor" />
+          <rect x="14" y="4" width="4" height="16" fill="currentColor" />
+        </svg>
+      </button>
+      <audio id="audio" src="" preload="metadata"></audio>
+    </footer>
+    <div id="upload-modal" class="modal hidden">
+      <div class="modal-content">
+        <span id="close-upload-modal" class="close">&times;</span>
+        <form id="upload-form" enctype="multipart/form-data">
+          <h2>Tilføj ny sang</h2>
+          <input type="text" name="title" placeholder="Titel" required />
+          <input type="text" name="artist" placeholder="Kunstner" required />
+          <input
+            type="file"
+            name="file"
+            accept="audio/mp3,audio/mpeg"
+            required
+          />
+          <input type="file" name="cover" accept="image/*" required />
+          <button type="submit">Upload sang</button>
+        </form>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
