@@ -11,8 +11,48 @@
     "id": 3,
     "title": "Gennem Byen",
     "artist": "Ukendt Kunster",
-    "length": 400,
+    "length": 240,
     "file": "Ukendt Kunstner - Gennem Byen.mp3",
     "cover": "GennemByen.jpg"
+  },
+  {
+    "id": 4,
+    "title": "Loading",
+    "artist": "Central Cee",
+    "length": 178,
+    "file": "Central Cee - Loading.mp3",
+    "cover": "maxresdefault.jpg"
+  },
+  {
+    "id": 5,
+    "title": "STORMZY - VOSSI BOP",
+    "artist": "Stormzy",
+    "length": 204,
+    "file": "STORMZY - VOSSI BOP.mp3",
+    "cover": "hqdefault.jpg"
+  },
+  {
+    "id": 6,
+    "title": "Noah Carter - Har Hørt Dig",
+    "artist": "Noah Carter",
+    "length": 167,
+    "file": "Noah Carter - Har HÃ¸rt Dig.mp3",
+    "cover": "Har HÃ¸rt Dig.jpg"
+  },
+  {
+    "id": 7,
+    "title": "Clash (ft. Stormzy)",
+    "artist": "Santan Dave",
+    "length": 0,
+    "file": "Santan Dave - Clash ft Stormzy.mp3",
+    "cover": "Santan Dave - Clash ft Stormzy.jpg"
+  },
+  {
+    "id": 8,
+    "title": "Sprinter",
+    "artist": "Central Cee",
+    "length": 229,
+    "file": "Central Cee - Sprinter.mp3",
+    "cover": "Central Cee - Sprinter.jpg"
   }
 ]

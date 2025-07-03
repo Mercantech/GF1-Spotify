@@ -17,10 +17,16 @@ const uploadForm = document.getElementById("upload-form");
 const openUploadModalBtn = document.getElementById("open-upload-modal");
 const uploadModal = document.getElementById("upload-modal");
 const closeUploadModalBtn = document.getElementById("close-upload-modal");
+const youtubeLinkInput = document.getElementById("youtube-link");
+const youtubePreview = document.getElementById("youtube-preview");
 
 let currentSong = null;
 let isPlaying = false;
 let allSongs = [];
+
+const titleInput = uploadForm ? uploadForm.querySelector('input[name="title"]') : null;
+const artistInput = uploadForm ? uploadForm.querySelector('input[name="artist"]') : null;
+const thumbnailUrlInput = uploadForm ? uploadForm.querySelector('input[name="thumbnail_url"]') : null;
 
 function formatLength(sec) {
   if (isNaN(sec) || sec === Infinity) return "0:00";
@@ -205,4 +211,48 @@ if (openUploadModalBtn && uploadModal && closeUploadModalBtn) {
       uploadModal.classList.add("hidden");
     });
   }
+}
+
+async function fetchYoutubePreview(url) {
+  // Brug evt. en backend-endpoint til at hente info, men her bruger vi YouTube oEmbed som fallback
+  try {
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+    const res = await fetch(oembedUrl);
+    if (!res.ok) throw new Error("Ugyldigt YouTube-link eller video ikke fundet");
+    const data = await res.json();
+    return {
+      title: data.title,
+      author: data.author_name,
+      thumbnail: data.thumbnail_url
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+if (youtubeLinkInput && youtubePreview) {
+  youtubeLinkInput.addEventListener("input", async function () {
+    const url = youtubeLinkInput.value.trim();
+    youtubePreview.classList.add("hidden");
+    youtubePreview.innerHTML = "";
+    if (!url) return;
+    youtubePreview.innerHTML = "<em>Henter preview...</em>";
+    const info = await fetchYoutubePreview(url);
+    if (info) {
+      youtubePreview.innerHTML = `
+        <img src="${info.thumbnail}" alt="Thumbnail" style="width:100%;max-width:320px;border-radius:8px;margin-bottom:0.5em;" />
+        <div style="font-weight:bold;">${info.title}</div>
+        <div style="color:#b3b3b3;">${info.author}</div>
+      `;
+      youtubePreview.classList.remove("hidden");
+      // Autofyld titel og kunstner hvis de er tomme
+      if (titleInput && !titleInput.value) titleInput.value = info.title;
+      if (artistInput && !artistInput.value) artistInput.value = info.author;
+      // Sæt thumbnail-url i skjult felt
+      if (thumbnailUrlInput) thumbnailUrlInput.value = info.thumbnail;
+    } else {
+      youtubePreview.innerHTML = "<span style='color:#ff4c4c'>Kunne ikke hente preview. Tjek linket.</span>";
+      youtubePreview.classList.remove("hidden");
+    }
+  });
 }

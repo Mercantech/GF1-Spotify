@@ -3,6 +3,8 @@ body {
   font-family: "Segoe UI", Arial, sans-serif;
   background: #181818;
   color: #fff;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 header {
   background: #121212;
@@ -33,6 +35,9 @@ header {
 main {
   padding: 2rem;
   min-height: 60vh;
+  padding-bottom: 100px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 #loader {
   border: 4px solid #232323;
@@ -338,4 +343,26 @@ main {
 }
 .close:hover {
   color: #1db954;
+}
+/* Skjul scrollbar i Chrome, Edge og Safari */
+body::-webkit-scrollbar,
+main::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+  display: none;
+}
+
+/* Skjul scrollbar i Firefox */
+body, main {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE og Edge */
+}
+
+html {
+  overflow: -moz-scrollbars-none;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  width: 0px;
+  display: none;
 }

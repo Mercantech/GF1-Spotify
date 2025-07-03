@@ -65,6 +65,9 @@
         <span id="close-upload-modal" class="close">&times;</span>
         <form id="upload-form" enctype="multipart/form-data">
           <h2>Tilføj ny sang</h2>
+          <input type="text" name="youtube" id="youtube-link" placeholder="YouTube-link (valgfrit)" style="" />
+          <input type="hidden" name="thumbnail_url" id="youtube-thumbnail-url" />
+          <div id="youtube-preview" class="hidden" style="margin-bottom: 1em;"></div>
           <input type="text" name="title" placeholder="Titel" required />
           <input type="text" name="artist" placeholder="Kunstner" required />
           <input
