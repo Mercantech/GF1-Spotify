@@ -5,15 +5,11 @@ const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const multer = require("multer");
-const ytdlp = require("yt-dlp-exec");
-const ffmpeg = require("fluent-ffmpeg");
-const ffmpegPath = require("ffmpeg-static");
 const fetch = require("node-fetch");
 let mm;
 (async () => {
   mm = await import("music-metadata");
 })();
-ffmpeg.setFfmpegPath(ffmpegPath);
 
 const app = express();
 const PORT = 3001;
@@ -156,84 +152,14 @@ app.post(
 );
 
 /**
- * Hent sang fra YouTube-link
- * Forventer: { youtubeUrl: "https://youtube.com/..." }
+ * YouTube download funktion (deaktiveret)
+ * Denne funktion kræver Python og yt-dlp som ikke er installeret
  */
 app.post("/api/songs/youtube", async (req, res) => {
-  const { youtubeUrl } = req.body;
-  if (!youtubeUrl) return res.status(400).json({ error: "Mangler YouTube-link" });
-
-  try {
-    console.log("Downloading from YouTube:", youtubeUrl);
-    const id = Date.now();
-    const safeTitle = "yt-" + id;
-    const fileName = `${safeTitle}.mp3`;
-    const filePath = path.join(__dirname, "music", fileName);
-    const coverName = `${safeTitle}.jpg`;
-    const coverPath = path.join(__dirname, "covers", coverName);
-
-    // Hent metadata og download thumbnail
-    const info = await ytdlp(youtubeUrl, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-      addHeader: ['referer:youtube.com', 'user-agent:googlebot']
-    });
-
-    const title = info.title;
-    const artist = info.artist || info.uploader;
-    const length = Math.round(info.duration || 0);
-
-    // Download thumbnail
-    if (info.thumbnail) {
-      const response = await fetch(info.thumbnail);
-      if (!response.ok) throw new Error("Kunne ikke hente thumbnail");
-      const buffer = await response.buffer();
-      fs.writeFileSync(coverPath, buffer);
-    }
-
-    // Download lyd som mp3
-    await ytdlp(youtubeUrl, {
-      extractAudio: true,
-      audioFormat: "mp3",
-      output: filePath
-    });
-
-    // Tilføj til songs.json
-    fs.readFile(
-      path.join(__dirname, "data", "songs.json"),
-      "utf8",
-      (err, data) => {
-        if (err) return res.status(500).json({ error: "Kan ikke læse sangdata" });
-        let songs = JSON.parse(data);
-        const newSong = {
-          id,
-          title,
-          artist,
-          length,
-          file: fileName,
-          cover: coverName,
-        };
-        songs.push(newSong);
-        fs.writeFile(
-          path.join(__dirname, "data", "songs.json"),
-          JSON.stringify(songs, null, 2),
-          (err2) => {
-            if (err2) return res.status(500).json({ error: "Kunne ikke gemme sang" });
-            res.json({ success: true, song: newSong });
-          }
-        );
-      }
-    );
-  } catch (e) {
-    console.error("YouTube-download fejl:", e);
-    res.status(500).json({
-      error: "Kunne ikke hente fra YouTube. Tjek at linket er gyldigt og videoen er tilgængelig.",
-      details: e && (e.message || e.toString()),
-      stack: e && e.stack
-    });
-  }
+  res.status(501).json({ 
+    error: "YouTube download er ikke tilgængelig. Upload venligst MP3-filer direkte via /api/songs/upload endpoint.",
+    message: "Denne funktion kræver Python og yt-dlp som ikke er installeret på systemet."
+  });
 });
 
 const swaggerOptions = {
