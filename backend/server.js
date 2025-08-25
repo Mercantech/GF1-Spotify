@@ -18,20 +18,9 @@ const PORT = 3001;
 // Komprimer alle responses
 app.use(compression());
 
-// CORS konfiguration der tillader både lokal udvikling og produktion
+// CORS konfiguration der tillader alle origins for udvikling
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',    
-    'http://127.0.0.1:5501',
-    'http://localhost:5501',
-    'https://gf1.mercantec.tech',
-    'https://www.gf1.mercantec.tech'
-  ],
+  origin: true, // Tillad alle origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -51,18 +40,9 @@ const getBaseUrl = (req) => {
 // CORS middleware til statiske filer
 const corsForStatic = (req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',
-    'https://gf1.mercantec.tech',
-    'https://www.gf1.mercantec.tech'
-  ];
-
-  if (origin && allowedOrigins.includes(origin)) {
+  
+  // Tillad alle origins
+  if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -79,18 +59,9 @@ const corsForStatic = (req, res, next) => {
 // CORS middleware til API endpoints
 const corsForApi = (req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',
-    'https://gf1.mercantec.tech',
-    'https://www.gf1.mercantec.tech'
-  ];
-
-  if (origin && allowedOrigins.includes(origin)) {
+  
+  // Tillad alle origins
+  if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

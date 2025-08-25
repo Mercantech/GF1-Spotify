@@ -36,6 +36,7 @@
         
         // Kør tests
         resultDiv.innerHTML = '<p>🔄 Tester CORS...</p>';
+        resultDiv.innerHTML += '<p>📍 Din frontend kører fra: ' + window.location.hostname + '</p>';
         testLocalBackend();
         testProductionBackend();
     </script>

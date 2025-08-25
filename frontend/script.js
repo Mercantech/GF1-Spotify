@@ -1,8 +1,5 @@
-// Automatisk miljødetektering - ingen config fil nødvendig
+// Brug altid produktion serveren
 const getApiUrl = () => {
-  
-  
-  // Ellers brug produktion server
   return 'https://gf1.mercantec.tech';
 };
 

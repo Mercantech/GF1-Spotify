@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produktion Server Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Produktion Server Test</h1>
+    <div class="test-section">
+        <h3>📍 Frontend Information</h3>
+        <p><strong>Hostname:</strong> <span id="hostname"></span></p>
+        <p><strong>Origin:</strong> <span id="origin"></span></p>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔗 API Test</h3>
+        <button onclick="testApi()">Test API Endpoint</button>
+        <div id="api-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🖼️ Billede Test</h3>
+        <button onclick="testImages()">Test Billeder</button>
+        <div id="image-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎵 Musik Test</h3>
+        <button onclick="testMusic()">Test Musik Filer</button>
+        <div id="music-result"></div>
+    </div>
+    
+    <script>
+        // Vis frontend information
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('origin').textContent = window.location.origin;
+        
+        const API_URL = 'https://gf1.mercantec.tech';
+        
+        async function testApi() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p class="info">🔄 Tester API...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/songs`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<p class="success">✅ API virker! ${data.length} sange fundet</p>`;
+                resultDiv.innerHTML += `<p><strong>CORS Headers:</strong></p>`;
+                resultDiv.innerHTML += `<ul>`;
+                resultDiv.innerHTML += `<li>Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin') || 'Ikke sat'}</li>`;
+                resultDiv.innerHTML += `<li>Access-Control-Allow-Methods: ${response.headers.get('Access-Control-Allow-Methods') || 'Ikke sat'}</li>`;
+                resultDiv.innerHTML += `<li>Access-Control-Allow-Headers: ${response.headers.get('Access-Control-Allow-Headers') || 'Ikke sat'}</li>`;
+                resultDiv.innerHTML += `</ul>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ API fejlede: ${error.message}</p>`;
+            }
+        }
+        
+        async function testImages() {
+            const resultDiv = document.getElementById('image-result');
+            resultDiv.innerHTML = '<p class="info">🔄 Tester billeder...</p>';
+            
+            const testImages = [
+                'FortælDem.png',
+                'GennemByen.jpg',
+                'Central Cee - Sprinter.jpg'
+            ];
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const image of testImages) {
+                try {
+                    const response = await fetch(`${API_URL}/covers/${image}`);
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    errorCount++;
+                }
+            }
+            
+            resultDiv.innerHTML = `<p class="success">✅ ${successCount} billeder virker</p>`;
+            if (errorCount > 0) {
+                resultDiv.innerHTML += `<p class="error">❌ ${errorCount} billeder fejlede</p>`;
+            }
+        }
+        
+        async function testMusic() {
+            const resultDiv = document.getElementById('music-result');
+            resultDiv.innerHTML = '<p class="info">🔄 Tester musik...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/songs`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const songs = await response.json();
+                if (songs.length > 0) {
+                    const testSong = songs[0];
+                    const musicResponse = await fetch(`${API_URL}/api/stream/${testSong.file}`);
+                    
+                    if (musicResponse.ok) {
+                        resultDiv.innerHTML = `<p class="success">✅ Musik streaming virker!</p>`;
+                        resultDiv.innerHTML += `<p><strong>Test sang:</strong> ${testSong.title} - ${testSong.artist}</p>`;
+                    } else {
+                        resultDiv.innerHTML = `<p class="error">❌ Musik streaming fejlede: ${musicResponse.status}</p>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Ingen sange at teste</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Musik test fejlede: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
