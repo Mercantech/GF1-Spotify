@@ -1,10 +1,26 @@
-// Konfigurerbar API URL - kan ændres til IP-adresse for netværkstilgang
-// For lokal udvikling: "http://localhost:3001"
-// For netværkstilgang: "http://[DIN_IP_ADRESSE]:3001"
-const API_URL = "http://localhost:3001";
+// Automatisk miljødetektering - ingen config fil nødvendig
+const getApiUrl = () => {
+  // Hvis vi kører på gf1.mercantec.tech, brug HTTPS
+  if (window.location.hostname === 'gf1.mercantec.tech' || 
+      window.location.hostname === 'www.gf1.mercantec.tech') {
+    return 'https://gf1.mercantec.tech';
+  }
+  
+  // Hvis vi kører lokalt, brug localhost
+  if (window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  
+  // Fallback til localhost
+  return 'http://gf1.mercantec.tech';
+};
 
-// Alternativt, brug din maskines IP-adresse for netværkstilgang:
-// const API_URL = "http://192.168.1.100:3001"; // Erstat med din faktiske IP
+const API_URL = getApiUrl();
+
+// Debug: Log API URL
+console.log('🔧 Frontend miljø:', window.location.hostname);
+console.log('🔧 API URL:', API_URL);
 
 const songListElem = document.getElementById("song-list");
 const audioElem = document.getElementById("audio");
@@ -64,12 +80,28 @@ function renderSongs(songs) {
     const div = document.createElement("div");
     div.className = "song";
     if (currentSong && currentSong.id === song.id) div.classList.add("active");
+    
+    // Tilføj error handling til billede
+    const img = document.createElement("img");
+    img.src = `${API_URL}/covers/${song.cover}`;
+    img.alt = "Cover";
+    img.onerror = () => {
+      console.error(`❌ Kunne ikke indlæse billede: ${API_URL}/covers/${song.cover}`);
+      img.style.display = 'none';
+    };
+    img.onload = () => {
+      console.log(`✅ Billede indlæst: ${API_URL}/covers/${song.cover}`);
+    };
+    
     div.innerHTML = `
-      <img src="${API_URL}/covers/${song.cover}" alt="Cover">
       <div class="song-title">${song.title}</div>
       <div class="song-artist">${song.artist}</div>
       <div class="song-length">${formatLength(song.length)}</div>
     `;
+    
+    // Indsæt billede først
+    div.insertBefore(img, div.firstChild);
+    
     div.onclick = () => playSong(song);
     songListElem.appendChild(div);
   });

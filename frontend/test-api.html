@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - GF1 Spotify</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .result { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 API Test - GF1 Spotify Backend</h1>
+    
+    <div class="test-section">
+        <h3>📍 Nuværende miljø</h3>
+        <p><strong>Hostname:</strong> <span id="current-hostname"></span></p>
+        <p><strong>API URL:</strong> <span id="current-api-url"></span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Test API endpoints</h3>
+        <button onclick="testApi('/api/songs')">Test /api/songs</button>
+        <button onclick="testApi('/api-docs')">Test /api-docs</button>
+        <button onclick="testApi('/api-docs/swagger.json')">Test Swagger JSON</button>
+        <div id="api-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 CORS Test</h3>
+        <button onclick="testCors()">Test CORS fra nuværende domæne</button>
+        <div id="cors-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🖼️ Test billeder</h3>
+        <button onclick="testImage('/covers/FortælDem.png')">Test PNG billede</button>
+        <button onclick="testImage('/covers/GennemByen.jpg')">Test JPG billede</button>
+        <div id="image-result" class="result"></div>
+    </div>
+
+    <script>
+        // Automatisk miljødetektering - ingen config fil nødvendig
+        const getApiUrl = () => {
+          
+          
+          // Fallback til localhost
+          return 'http://gf1.mercantec.tech';
+        };
+
+        const API_URL = getApiUrl();
+
+        // Vis nuværende miljø
+        document.getElementById('current-hostname').textContent = window.location.hostname;
+        document.getElementById('current-api-url').textContent = API_URL;
+
+        async function testApi(endpoint) {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = 'Tester...';
+            
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`);
+                const data = await response.text();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <strong>✅ Success!</strong><br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>URL:</strong> ${API_URL}${endpoint}<br>
+                        <strong>Response:</strong> ${data.substring(0, 200)}...
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Fejl!</strong><br>
+                        <strong>URL:</strong> ${API_URL}${endpoint}<br>
+                        <strong>Fejl:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testCors() {
+            const resultDiv = document.getElementById('cors-result');
+            resultDiv.innerHTML = 'Tester CORS...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/songs`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ CORS virker!</strong><br>
+                            <strong>Status:</strong> ${response.status}<br>
+                            <strong>Headers:</strong> ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>⚠️ CORS fejl!</strong><br>
+                            <strong>Status:</strong> ${response.status}<br>
+                            <strong>Status Text:</strong> ${response.statusText}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ CORS fejl!</strong><br>
+                        <strong>Fejl:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testImage(imagePath) {
+            const resultDiv = document.getElementById('image-result');
+            resultDiv.innerHTML = 'Tester billede...';
+            
+            try {
+                const response = await fetch(`${API_URL}${imagePath}`);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Billede virker!</strong><br>
+                            <strong>Status:</strong> ${response.status}<br>
+                            <strong>Content-Type:</strong> ${response.headers.get('content-type')}<br>
+                            <strong>URL:</strong> ${API_URL}${imagePath}<br>
+                            <img src="${API_URL}${imagePath}" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd;">
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ Billede fejl!</strong><br>
+                            <strong>Status:</strong> ${response.status}<br>
+                            <strong>Status Text:</strong> ${response.statusText}<br>
+                            <strong>URL:</strong> ${API_URL}${imagePath}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Billede fejl!</strong><br>
+                        <strong>URL:</strong> ${API_URL}${imagePath}<br>
+                        <strong>Fejl:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

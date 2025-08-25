@@ -18,11 +18,61 @@ const PORT = 3001;
 // Komprimer alle responses
 app.use(compression());
 
-app.use(cors());
+// CORS konfiguration der tillader både lokal udvikling og produktion
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:5500',
+    'https://gf1.mercantec.tech',
+    'https://www.gf1.mercantec.tech'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json());
 
+// Dynamisk base URL detection
+const getBaseUrl = (req) => {
+  if (req.headers.host) {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    return `${protocol}://${req.headers.host}`;
+  }
+  return `http://localhost:${PORT}`;
+};
+
+// CORS middleware til statiske filer
+const corsForStatic = (req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'https://gf1.mercantec.tech',
+    'https://www.gf1.mercantec.tech'
+  ];
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+};
+
 // Forbedret statisk filhåndtering med caching og komprimering
-app.use("/music", express.static(path.join(__dirname, "music"), {
+app.use("/music", corsForStatic, express.static(path.join(__dirname, "music"), {
   maxAge: '1d', // Cache MP3-filer i 1 dag
   etag: true,
   lastModified: true,
@@ -33,13 +83,19 @@ app.use("/music", express.static(path.join(__dirname, "music"), {
   }
 }));
 
-app.use("/covers", express.static(path.join(__dirname, "covers"), {
+app.use("/covers", corsForStatic, express.static(path.join(__dirname, "covers"), {
   maxAge: '7d', // Cache billeder i 7 dage
   etag: true,
   lastModified: true,
   setHeaders: (res, path) => {
-    // Komprimer billeder
-    res.setHeader('Content-Encoding', 'gzip');
+    // Sæt korrekt Content-Type for billeder
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (path.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (path.endsWith('.gif')) {
+      res.setHeader('Content-Type', 'image/gif');
+    }
   }
 }));
 
@@ -74,23 +130,23 @@ app.get("/api/songs/:id", (req, res) => {
 app.get("/api/stream/:filename", (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, "music", filename);
-  
+
   // Tjek om filen eksisterer
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: "Fil ikke fundet" });
   }
-  
+
   const stat = fs.statSync(filePath);
   const fileSize = stat.size;
   const range = req.headers.range;
-  
+
   if (range) {
     // Håndter range requests for streaming
     const parts = range.replace(/bytes=/, "").split("-");
     const start = parseInt(parts[0], 10);
     const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
     const chunksize = (end - start) + 1;
-    
+
     res.writeHead(206, {
       'Content-Range': `bytes ${start}-${end}/${fileSize}`,
       'Accept-Ranges': 'bytes',
@@ -98,7 +154,7 @@ app.get("/api/stream/:filename", (req, res) => {
       'Content-Type': 'audio/mpeg',
       'Cache-Control': 'public, max-age=86400'
     });
-    
+
     const stream = fs.createReadStream(filePath, { start, end });
     stream.pipe(res);
   } else {
@@ -109,7 +165,7 @@ app.get("/api/stream/:filename", (req, res) => {
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'public, max-age=86400'
     });
-    
+
     const stream = fs.createReadStream(filePath);
     stream.pipe(res);
   }
@@ -223,7 +279,7 @@ app.post(
  * Denne funktion kræver Python og yt-dlp som ikke er installeret
  */
 app.post("/api/songs/youtube", async (req, res) => {
-  res.status(501).json({ 
+  res.status(501).json({
     error: "YouTube download er ikke tilgængelig. Upload venligst MP3-filer direkte via /api/songs/upload endpoint.",
     message: "Denne funktion kræver Python og yt-dlp som ikke er installeret på systemet."
   });
@@ -240,14 +296,49 @@ const swaggerOptions = {
     servers: [
       {
         url: "http://localhost:3001",
+        description: "Lokal udvikling"
       },
+      {
+        url: "https://gf1.mercantec.tech",
+        description: "Produktions server"
+      }
     ],
   },
   apis: [__filename],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Tilføj custom Swagger UI konfiguration
+const swaggerUiOptions = {
+  customSiteTitle: "GF1 Spotify API",
+  customCss: '.swagger-ui .topbar { display: none }',
+  swaggerOptions: {
+    url: '/api-docs/swagger.json',
+    defaultModelsExpandDepth: -1,
+    docExpansion: 'list',
+    filter: true,
+    showRequestHeaders: true,
+    tryItOutEnabled: true
+  }
+};
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+
+// Endpoint til at hente Swagger spec med korrekt base URL
+app.get("/api-docs/swagger.json", (req, res) => {
+  const baseUrl = getBaseUrl(req);
+  const specWithBaseUrl = {
+    ...swaggerSpec,
+    servers: [
+      {
+        url: baseUrl,
+        description: "Automatisk detekteret server"
+      }
+    ]
+  };
+  res.json(specWithBaseUrl);
+});
 
 /**
  * @swagger
