@@ -56,6 +56,8 @@ const corsForStatic = (req, res, next) => {
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
     'https://gf1.mercantec.tech',
     'https://www.gf1.mercantec.tech'
   ];
@@ -65,6 +67,34 @@ const corsForStatic = (req, res, next) => {
   }
   res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+};
+
+// CORS middleware til API endpoints
+const corsForApi = (req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'https://gf1.mercantec.tech',
+    'https://www.gf1.mercantec.tech'
+  ];
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.header('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
@@ -103,7 +133,7 @@ app.use("/covers", corsForStatic, express.static(path.join(__dirname, "covers"),
 }));
 
 // Hent alle sange
-app.get("/api/songs", (req, res) => {
+app.get("/api/songs", corsForApi, (req, res) => {
   fs.readFile(
     path.join(__dirname, "data", "songs.json"),
     "utf8",
@@ -115,7 +145,7 @@ app.get("/api/songs", (req, res) => {
 });
 
 // Hent metadata for én sang
-app.get("/api/songs/:id", (req, res) => {
+app.get("/api/songs/:id", corsForApi, (req, res) => {
   fs.readFile(
     path.join(__dirname, "data", "songs.json"),
     "utf8",
@@ -130,7 +160,7 @@ app.get("/api/songs/:id", (req, res) => {
 });
 
 // Dedikeret streaming endpoint til MP3-filer med range support
-app.get("/api/stream/:filename", (req, res) => {
+app.get("/api/stream/:filename", corsForApi, (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, "music", filename);
 
@@ -199,6 +229,7 @@ const upload = multer({ storage: musicStorage });
  */
 app.post(
   "/api/songs/upload",
+  corsForApi,
   upload.fields([
     { name: "file", maxCount: 1 },
     { name: "cover", maxCount: 1 },
@@ -281,7 +312,7 @@ app.post(
  * YouTube download funktion (deaktiveret)
  * Denne funktion kræver Python og yt-dlp som ikke er installeret
  */
-app.post("/api/songs/youtube", async (req, res) => {
+app.post("/api/songs/youtube", corsForApi, async (req, res) => {
   res.status(501).json({
     error: "YouTube download er ikke tilgængelig. Upload venligst MP3-filer direkte via /api/songs/upload endpoint.",
     message: "Denne funktion kræver Python og yt-dlp som ikke er installeret på systemet."
@@ -326,10 +357,10 @@ const swaggerUiOptions = {
   }
 };
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+app.use("/api-docs", corsForApi, swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Endpoint til at hente Swagger spec med korrekt base URL
-app.get("/api-docs/swagger.json", (req, res) => {
+app.get("/api-docs/swagger.json", corsForApi, (req, res) => {
   const baseUrl = getBaseUrl(req);
   const specWithBaseUrl = {
     ...swaggerSpec,

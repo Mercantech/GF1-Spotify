@@ -1,19 +1,9 @@
 // Automatisk miljødetektering - ingen config fil nødvendig
 const getApiUrl = () => {
-  // Hvis vi kører på gf1.mercantec.tech, brug HTTPS
-  if (window.location.hostname === 'gf1.mercantec.tech' || 
-      window.location.hostname === 'www.gf1.mercantec.tech') {
-    return 'https://gf1.mercantec.tech';
-  }
   
-  // Hvis vi kører lokalt, brug localhost
-  if (window.location.hostname === 'localhost' || 
-      window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3001';
-  }
   
-  // Fallback til localhost
-  return 'http://gf1.mercantec.tech';
+  // Ellers brug produktion server
+  return 'https://gf1.mercantec.tech';
 };
 
 const API_URL = getApiUrl();
