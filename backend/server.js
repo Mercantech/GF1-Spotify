@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
 const fs = require("fs");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
@@ -14,12 +15,33 @@ let mm;
 const app = express();
 const PORT = 3001;
 
+// Komprimer alle responses
+app.use(compression());
+
 app.use(cors());
 app.use(express.json());
 
-// Statisk adgang til musik og covers
-app.use("/music", express.static(path.join(__dirname, "music")));
-app.use("/covers", express.static(path.join(__dirname, "covers")));
+// Forbedret statisk filhåndtering med caching og komprimering
+app.use("/music", express.static(path.join(__dirname, "music"), {
+  maxAge: '1d', // Cache MP3-filer i 1 dag
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    // Tillad range requests for audio streaming
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', 'audio/mpeg');
+  }
+}));
+
+app.use("/covers", express.static(path.join(__dirname, "covers"), {
+  maxAge: '7d', // Cache billeder i 7 dage
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    // Komprimer billeder
+    res.setHeader('Content-Encoding', 'gzip');
+  }
+}));
 
 // Hent alle sange
 app.get("/api/songs", (req, res) => {
@@ -46,6 +68,51 @@ app.get("/api/songs/:id", (req, res) => {
       res.json(song);
     }
   );
+});
+
+// Dedikeret streaming endpoint til MP3-filer med range support
+app.get("/api/stream/:filename", (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, "music", filename);
+  
+  // Tjek om filen eksisterer
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Fil ikke fundet" });
+  }
+  
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+  
+  if (range) {
+    // Håndter range requests for streaming
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunksize = (end - start) + 1;
+    
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': 'audio/mpeg',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    
+    const stream = fs.createReadStream(filePath, { start, end });
+    stream.pipe(res);
+  } else {
+    // Hvis ingen range request, send hele filen
+    res.writeHead(200, {
+      'Content-Length': fileSize,
+      'Content-Type': 'audio/mpeg',
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  }
 });
 
 const musicStorage = multer.diskStorage({

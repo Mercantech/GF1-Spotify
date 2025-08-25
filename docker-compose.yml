@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spotify-backend
+    ports:
+      # Bind til alle interfaces (0.0.0.0) så backend kan tilgås fra netværket
+      - "0.0.0.0:3001:3001"
+    volumes:
+      # Mount musik og covers mapper så data bevares mellem container genstart
+      - ./backend/music:/app/music
+      - ./backend/covers:/app/covers
+      - ./backend/data:/app/data
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - spotify-network
+
+networks:
+  spotify-network:
+    driver: bridge

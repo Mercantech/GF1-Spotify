@@ -1,4 +1,10 @@
+// Konfigurerbar API URL - kan ændres til IP-adresse for netværkstilgang
+// For lokal udvikling: "http://localhost:3001"
+// For netværkstilgang: "http://[DIN_IP_ADRESSE]:3001"
 const API_URL = "http://localhost:3001";
+
+// Alternativt, brug din maskines IP-adresse for netværkstilgang:
+// const API_URL = "http://192.168.1.100:3001"; // Erstat med din faktiske IP
 
 const songListElem = document.getElementById("song-list");
 const audioElem = document.getElementById("audio");
@@ -80,7 +86,11 @@ function playSong(song) {
     return;
   }
   currentSong = song;
-  audioElem.src = `${API_URL}/music/${song.file}`;
+  
+  // Brug streaming endpoint for bedre netværksydelse
+  // audioElem.src = `${API_URL}/music/${song.file}`;
+  audioElem.src = `${API_URL}/api/stream/${song.file}`;
+  
   playerCover.src = `${API_URL}/covers/${song.cover}`;
   playerCover.style.display = "block";
   playerInfo.textContent = `${song.title} – ${song.artist}`;
