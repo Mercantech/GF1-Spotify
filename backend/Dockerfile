@@ -1,12 +1,14 @@
+# Brug en mere stabil Node.js base image
 FROM node:18-alpine
 
+# Sæt arbejdsmappe
 WORKDIR /app
 
 # Kopier package.json og package-lock.json først for bedre caching
 COPY package*.json ./
 
-# Installer dependencies
-RUN npm ci --only=production
+# Installer dependencies med bedre error handling
+RUN npm ci --only=production --silent || npm install --only=production --silent
 
 # Kopier resten af applikationen
 COPY . .
